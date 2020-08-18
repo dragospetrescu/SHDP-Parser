@@ -27,7 +27,6 @@ import std.range;
 import std.stdio;
 import std.algorithm;
 import std.path;
-import std.json;
 
 extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
 {
@@ -35,7 +34,6 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
     Scope* sc;
     bool insideUnittest;
     string[][string] funcDict;
-    JSONValue jv;
 
     this(Scope* sc)
     {
@@ -43,75 +41,10 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
         this.insideUnittest = false;
     }
 
-    override void visit(UnitTestDeclaration ud)
+
+    override void visit(FuncDeclaration fd)
     {
-        if (ud.type !is null)
-        {
-            if (ud.isNogc)
-            {
-                insideUnittest = true;
-                ud.fbody.accept(this);
-                insideUnittest = false;
-            }
-        }
-    }
-
-    override void visit(CallExp ce)
-    {
-        Dsymbol sym;
-        if (insideUnittest)
-        {
-            FuncDeclaration fd = ce.f;
-            if (fd !is null)
-            {
-                TypeFunction tf = fd.type.toTypeFunction();
-                if (!fd.isCtorDeclaration() && fd.parent.isTemplateInstance())
-                {
-                    TemplateDeclaration td = getFuncTemplateDecl(fd);
-                    if (td !is null)
-                    {
-                        string funcName = fd.toString().idup();
-                        string tdName = td.toString().idup();
-                        if ("members" !in jv)
-                        {
-                            JSONValue jj = JSONValue(["fname" : funcName]);
-                            jj.object["signatures"] = [JSONValue(["form" : tdName])];
-
-                            jv.object["members"] = [jj];
-                        }
-                        else
-                        {
-                            bool insideMembers = false;
-                            foreach (ref jval; jv["members"].array)
-                            {
-                                if (jval["fname"].str == funcName)
-                                {
-                                    insideMembers = true;
-                                    bool insideSignatures = false;
-                                    foreach(jjval; jval["signatures"].array)
-                                    {
-                                        if (jjval["form"].str == tdName)
-                                            insideSignatures = true;
-                                    }
-                                    if (!insideSignatures)
-                                    {
-                                        jval["signatures"].array ~= JSONValue(["form" : tdName]);
-                                    }
-                                    break;
-                                }
-                            }
-                            if (!insideMembers)
-                            {
-                                JSONValue jj = JSONValue(["fname" : funcName]);
-                                jj.object["signatures"] = [JSONValue(["form" : tdName])];
-
-                                jv["members"].array ~= jj;
-                            }
-                        }
-                    }
-                }
-            }
-        }
+      writeln(fd.toString());
     }
 }
 
@@ -123,19 +56,15 @@ void nogcCoverageCheck(Dsymbol dsym, Scope* sc)
 
     string fullName = buf.extractSlice();
 
-    JSONValue jv = JSONValue(["name" : fullName]);
 
     scope v = new NogcCoverageVisitor(sc);
-    v.jv = jv;
     dsym.accept(v);
 
-    jv.object["file"] = JSONValue(fullName.replace(".", "/") ~ ".d");
-    jv.object["kind"] = JSONValue("module");
 
 }
 
 
-void initTool(string[] versionIdentifiers, string[] importPaths)
+void initTool(string[] importPaths)
 {
     //Global.params must be set *before* initDMD();
     global.params.isLinux = true;
@@ -144,7 +73,7 @@ void initTool(string[] versionIdentifiers, string[] importPaths)
     global.params.useDIP25 = true;
     global.params.vsafe = true;
 
-    initDMD(null, versionIdentifiers);
+    initDMD();
 
     /*
     Import paths should be added using addImport()
@@ -195,14 +124,13 @@ void main(string[] args)
     string path;
     Modules modules;
     string[] importPaths;
-    string[] versionIdentifiers = ["StdUnittest", "CoreUnittest"];
 
     path = args[1];
 
     for (int i = 2; i < args.length; i++)
         importPaths ~= args[i];
 
-    initTool(versionIdentifiers, importPaths);
+    initTool(importPaths);
 
     modules = prepareModules(path);
 
