@@ -32,13 +32,10 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
 {
     alias visit = SemanticTimeTransitiveVisitor.visit;
     Scope* sc;
-    bool insideUnittest;
-    string[][string] funcDict;
 
     this(Scope* sc)
     {
         this.sc = sc;
-        this.insideUnittest = false;
     }
 
 
@@ -50,13 +47,7 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
 
 void nogcCoverageCheck(Dsymbol dsym, Scope* sc)
 {
-    OutBuffer buf;
     Module m = cast(Module)dsym;
-    m.fullyQualifiedName(buf);
-
-    string fullName = buf.extractSlice();
-
-
     scope v = new NogcCoverageVisitor(sc);
     dsym.accept(v);
 
