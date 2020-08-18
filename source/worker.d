@@ -60,11 +60,7 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
     }
 
     void printFunction(FuncDeclaration fd) {
-      if(fd.getModule() is null) {
-        writeln(fd.toString());
-      } else {
-        writeln(fd.getModule().toString()~"."~fd.toString());
-      }
+        writeln("fun:*"~fd.toString()~"*");
     }
 }
 

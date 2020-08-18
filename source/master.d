@@ -47,7 +47,10 @@ void main(string[] args)
             auto worker = execute(params, null, Config.stderrPassThrough);
             if (worker.status != 0)
                     writeln("Analysis failed!");
-            writeln(worker.output);
+            if(worker.output.length != 0) {
+              write(worker.output);
+            }
+
         }
     }
     else if(isFile(path))
@@ -61,6 +64,8 @@ void main(string[] args)
         auto worker = execute(params, null, Config.stderrPassThrough);
         if (worker.status != 0)
                 writeln("Analysis failed!");
-        writeln(worker.output);
+        if(worker.output.length != 0) {
+          write(worker.output);
+        }
     }
 }
