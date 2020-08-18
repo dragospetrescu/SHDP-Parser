@@ -30,11 +30,6 @@ void main(string[] args)
             importPaths ~= args[i];
     }
 
-    if (exists("results"))
-        rmdirRecurse("results");
-
-    mkdir("results");
-
     if(isDir(path))
     {
         auto dFiles = dirEntries(path, "*.d", SpanMode.depth);

@@ -29,8 +29,6 @@ import std.algorithm;
 import std.path;
 import std.json;
 
-string resultsDir = "results/";
-
 extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
 {
     alias visit = SemanticTimeTransitiveVisitor.visit;
@@ -125,8 +123,6 @@ void nogcCoverageCheck(Dsymbol dsym, Scope* sc)
 
     string fullName = buf.extractSlice();
 
-    auto f = File(resultsDir ~ fullName ~ ".json", "a");
-
     JSONValue jv = JSONValue(["name" : fullName]);
 
     scope v = new NogcCoverageVisitor(sc);
@@ -136,10 +132,6 @@ void nogcCoverageCheck(Dsymbol dsym, Scope* sc)
     jv.object["file"] = JSONValue(fullName.replace(".", "/") ~ ".d");
     jv.object["kind"] = JSONValue("module");
 
-    writeln(v.jv.toPrettyString(JSONOptions.doNotEscapeSlashes));
-
-    f.writeln(v.jv.toPrettyString(JSONOptions.doNotEscapeSlashes));
-    f.close();
 }
 
 
