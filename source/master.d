@@ -5,7 +5,6 @@ import std.file;
 import std.stdio;
 import std.path;
 import std.algorithm;
-import std.json;
 
 
 void main(string[] args)
@@ -13,9 +12,6 @@ void main(string[] args)
     string path;
     string[] importPaths;
     string[] params;
-    string[] versionIdentifiers = ["StdUnittest", "CoreUnittest"];
-    JSONValue json;
-    json.array = [];
 
     if (args.length < 3)
     {
@@ -51,7 +47,7 @@ void main(string[] args)
             auto worker = execute(params, null, Config.stderrPassThrough);
             if (worker.status != 0)
                     writeln("Analysis failed!");
-            json.array ~= parseJSON(worker.output);
+            writeln(worker.output);
         }
     }
     else if(isFile(path))
@@ -64,9 +60,6 @@ void main(string[] args)
         auto worker = execute(params, null, Config.stderrPassThrough);
         if (worker.status != 0)
                 writeln("Analysis failed!");
-        json.array ~= parseJSON(worker.output);
+        writeln(worker.output);
     }
-
-    auto f = File("combined.json", "w");
-    f.writeln(json.toPrettyString(JSONOptions.doNotEscapeSlashes));
 }
