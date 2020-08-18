@@ -33,25 +33,46 @@ extern(C++) class NogcCoverageVisitor : SemanticTimeTransitiveVisitor
     alias visit = SemanticTimeTransitiveVisitor.visit;
     Scope* sc;
 
-    this(Scope* sc)
+    bool printTrusted;
+    bool printSystem;
+
+    this(Scope* sc, bool printTrusted, bool printSystem)
     {
         this.sc = sc;
+        this.printTrusted = printTrusted;
+        this.printSystem = printSystem;
     }
 
 
     override void visit(FuncDeclaration fd)
     {
-      writeln(fd.toString());
+      if(fd.isTrusted && printTrusted) {
+        printFunction(fd);
+      }
+
+      if(isSystem(fd) && printSystem) {
+        printFunction(fd);
+      }
+    }
+
+    bool isSystem(FuncDeclaration fd) {
+      return !fd.isSafe && !fd.isTrusted;
+    }
+
+    void printFunction(FuncDeclaration fd) {
+      if(fd.getModule() is null) {
+        writeln(fd.toString());
+      } else {
+        writeln(fd.getModule().toString()~"."~fd.toString());
+      }
     }
 }
 
-void nogcCoverageCheck(Dsymbol dsym, Scope* sc)
+void nogcCoverageCheck(Dsymbol dsym, Scope* sc, bool printTrusted, bool printSystem)
 {
     Module m = cast(Module)dsym;
-    scope v = new NogcCoverageVisitor(sc);
+    scope v = new NogcCoverageVisitor(sc, printTrusted, printSystem);
     dsym.accept(v);
-
-
 }
 
 
@@ -101,11 +122,11 @@ Modules prepareModules(string path)
     return modules;
 }
 
-void checkNogcCoverage(Modules *modules)
+void checkNogcCoverage(bool printTrusted, bool printSystem, Modules *modules)
 {
     foreach(m; *modules)
     {
-        m.nogcCoverageCheck(null);
+        m.nogcCoverageCheck(null, printTrusted, printSystem);
     }
 }
 
@@ -113,19 +134,36 @@ void checkNogcCoverage(Modules *modules)
 void main(string[] args)
 {
     string path;
+    string securityLevel;
     Modules modules;
     string[] importPaths;
+    bool printTrusted;
+    bool printSystem;
 
-    path = args[1];
+    securityLevel = args[1];
+    if(securityLevel == "-trusted") {
+      printTrusted = true;
+      printSystem = false;
+    }else if(securityLevel == "-system") {
+      printTrusted = false;
+      printSystem = true;
+    } else if(securityLevel == "-non-safe") {
+      printTrusted = true;
+      printSystem = true;
+    } else {
+      writeln("UNEXPECTED securityLevel "~securityLevel);
+      return;
+    }
 
-    for (int i = 2; i < args.length; i++)
+    path = args[2];
+    for (int i = 3; i < args.length; i++)
         importPaths ~= args[i];
 
     initTool(importPaths);
 
     modules = prepareModules(path);
 
-    checkNogcCoverage(&modules);
+    checkNogcCoverage(printTrusted, printSystem, &modules);
 
     deinitializeTool();
 }

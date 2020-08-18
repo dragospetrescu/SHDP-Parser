@@ -10,8 +10,10 @@ import std.algorithm;
 void main(string[] args)
 {
     string path;
+    string securityLevel;
     string[] importPaths;
     string[] params;
+
 
     if (args.length < 3)
     {
@@ -20,13 +22,15 @@ void main(string[] args)
     }
     else
     {
-        path = args[1];
+        securityLevel = args[1];
+        path = args[2];
         if (!exists(path))
         {
             writeln("Invalid path");
             return;
         }
-        for (int i = 2; i < args.length; i++)
+
+        for (int i = 3; i < args.length; i++)
             importPaths ~= args[i];
     }
 
@@ -37,6 +41,7 @@ void main(string[] args)
         {
             params = [];
             params ~= "./nogcov_worker";
+            params ~= securityLevel;
             params ~= d.name;
             params ~= importPaths;
             auto worker = execute(params, null, Config.stderrPassThrough);
@@ -50,6 +55,7 @@ void main(string[] args)
         if (!endsWith(path, ".d"))
             return;
         params ~= "./nogcov_worker";
+        params ~= securityLevel;
         params ~= path;
         params ~= importPaths;
         auto worker = execute(params, null, Config.stderrPassThrough);
