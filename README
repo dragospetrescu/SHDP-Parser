@@ -1,1 +1,3 @@
 This is the SHDP parser
+
+./nogcov_master -non-safe ../../../dfmt/src/dfmt/ ../../../dfmt/src/ ../../../libdparse/src/ ../../../stdx-allocator/source/ ../../../mir-core/source/ ../phobos/ ../druntime/import/
